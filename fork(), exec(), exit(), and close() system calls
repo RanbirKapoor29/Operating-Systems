@@ -1,0 +1,51 @@
+4.Write a Unix C program that demonstrates the usage of fork(), exec(), exit(), and close() system calls in one execution. 
+
+#include <stdio.h> 
+#include <stdlib.h> 
+#include <unistd.h> 
+#include <sys/types.h> 
+#include <sys/wait.h> 
+#include <fcntl.h> 
+ 
+int main() { 
+    pid_t pid; 
+    int status; 
+ 
+    // Fork a new process 
+    pid = fork(); 
+ 
+    if (pid < 0) { 
+        perror("fork failed"); 
+        exit(EXIT_FAILURE); 
+    }  
+    else if (pid == 0) {   
+        // Child process 
+ 
+        // Close standard output (stdout) 
+        close(STDOUT_FILENO); 
+ 
+        // Execute ls command 
+        execlp("ls", "ls", "-l", NULL); 
+ 
+ 
+        // If exec fails 
+        perror("exec failed"); 
+        exit(EXIT_FAILURE); 
+    }  
+    else {   
+        // Parent process 
+        printf("Parent waiting for child process to finish...\n"); 
+ 
+        // Wait for child to complete 
+        waitpid(pid, &status, 0); 
+ 
+        if (WIFEXITED(status)) { 
+            printf("Child exited with status %d\n", 
+WEXITSTATUS(status)); 
+        } else { 
+            printf("Child terminated abnormally\n"); 
+        } 
+    } 
+ 
+    return 0; 
+} 
