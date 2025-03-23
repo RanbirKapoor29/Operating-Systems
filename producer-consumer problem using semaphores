@@ -1,0 +1,90 @@
+9. Write a program to implement the producer-consumer problem using semaphores. 
+
+import java.util.concurrent.Semaphore;
+import java.util.LinkedList;
+
+class Buffer {
+    private final LinkedList<Integer> queue = new LinkedList<>();
+    private final int capacity;
+    private final Semaphore mutex = new Semaphore(1);
+    private final Semaphore empty;
+    private final Semaphore full = new Semaphore(0);
+    
+    public Buffer(int capacity) {
+        this.capacity = capacity;
+        this.empty = new Semaphore(capacity);
+    }
+    
+    public void produce(int item) throws InterruptedException {
+        empty.acquire(); // Wait if buffer is full
+        mutex.acquire(); // Lock the buffer
+        
+        queue.add(item);
+        System.out.println("Produced: " + item);
+        
+        mutex.release(); // Unlock the buffer
+        full.release(); // Signal that buffer is not empty
+    }
+    
+    public int consume() throws InterruptedException {
+        full.acquire(); // Wait if buffer is empty
+        mutex.acquire(); // Lock the buffer
+        
+        int item = queue.removeFirst();
+        System.out.println("Consumed: " + item);
+        
+        mutex.release(); // Unlock the buffer
+        empty.release(); // Signal that buffer is not full
+        return item;
+    }
+}
+
+class Producer extends Thread {
+    private final Buffer buffer;
+    
+    public Producer(Buffer buffer) {
+        this.buffer = buffer;
+    }
+    
+    public void run() {
+        try {
+            for (int i = 1; i <= 10; i++) {
+                buffer.produce(i);
+                Thread.sleep(500);
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+class Consumer extends Thread {
+    private final Buffer buffer;
+    
+    public Consumer(Buffer buffer) {
+        this.buffer = buffer;
+    }
+    
+    public void run() {
+        try {
+            for (int i = 1; i <= 10; i++) {
+                buffer.consume();
+                Thread.sleep(1000);
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+public class ProducerConsumer {
+    public static void main(String[] args) {
+        Buffer buffer = new Buffer(5);
+        
+        Producer producer = new Producer(buffer);
+        Consumer consumer = new Consumer(buffer);
+        
+        producer.start();
+        consumer.start();
+    }
+}
