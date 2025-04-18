@@ -14,76 +14,56 @@ class Buffer {
         this.capacity = capacity;
         this.empty = new Semaphore(capacity);
     }
-    
+
     public void produce(int item) throws InterruptedException {
-        empty.acquire(); // Wait if buffer is full
-        mutex.acquire(); // Lock the buffer
-        
+        empty.acquire();
+        mutex.acquire();
+
         queue.add(item);
         System.out.println("Produced: " + item);
-        
-        mutex.release(); // Unlock the buffer
-        full.release(); // Signal that buffer is not empty
+
+        mutex.release();
+        full.release();
     }
-    
-    public int consume() throws InterruptedException {
-        full.acquire(); // Wait if buffer is empty
-        mutex.acquire(); // Lock the buffer
-        
+
+    public void consume() throws InterruptedException {
+        full.acquire();
+        mutex.acquire();
+
         int item = queue.removeFirst();
         System.out.println("Consumed: " + item);
-        
-        mutex.release(); // Unlock the buffer
-        empty.release(); // Signal that buffer is not full
-        return item;
+
+        mutex.release();
+        empty.release();
     }
 }
 
-class Producer extends Thread {
-    private final Buffer buffer;
-    
-    public Producer(Buffer buffer) {
-        this.buffer = buffer;
-    }
-    
-    public void run() {
-        try {
-            for (int i = 1; i <= 10; i++) {
-                buffer.produce(i);
-                Thread.sleep(500);
-            }
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
-}
-
-class Consumer extends Thread {
-    private final Buffer buffer;
-    
-    public Consumer(Buffer buffer) {
-        this.buffer = buffer;
-    }
-    
-    public void run() {
-        try {
-            for (int i = 1; i <= 10; i++) {
-                buffer.consume();
-                Thread.sleep(1000);
-            }
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
-}
-
-public class ProducerConsumer {
+public class Main {
     public static void main(String[] args) {
         Buffer buffer = new Buffer(5);
-        
-        Producer producer = new Producer(buffer);
-        Consumer consumer = new Consumer(buffer);
-        
+
+        Thread producer = new Thread(() -> {
+            try {
+                for (int i = 1; i <= 10; i++) {
+                    buffer.produce(i);
+                    Thread.sleep(500);
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        });
+
+        Thread consumer = new Thread(() -> {
+            try {
+                for (int i = 1; i <= 10; i++) {
+                    buffer.consume();
+                    Thread.sleep(1000);
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        });
+
         producer.start();
         consumer.start();
     }
