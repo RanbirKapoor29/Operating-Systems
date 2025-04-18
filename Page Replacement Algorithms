@@ -1,48 +1,41 @@
 10. Write a program to implement the FIFO Page Replacement Algorithms 
 
-import java.util.LinkedList;
-import java.util.Queue;
-import java.util.Scanner;
+import java.util.*;
 
 public class FIFOPageReplacement {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
-        
-        System.out.print("Enter the number of frames: ");
-        int frames = sc.nextInt();
-        
-        System.out.print("Enter the number of pages: ");
-        int pagesCount = sc.nextInt();
-        
-        int[] pages = new int[pagesCount];
-        System.out.println("Enter the reference string: ");
-        for (int i = 0; i < pagesCount; i++) {
-            pages[i] = sc.nextInt();
-        }
-        
-        fifoPageReplacement(pages, frames);
+
+        System.out.print("Enter number of frames: ");
+        int frameLimit = sc.nextInt();
+
+        System.out.print("Enter number of pages: ");
+        int totalPages = sc.nextInt();
+
+        int[] pages = new int[totalPages];
+        System.out.println("Enter page reference string:");
+        for (int i = 0; i < totalPages; i++) pages[i] = sc.nextInt();
+
+        runFIFO(pages, frameLimit);
         sc.close();
     }
-    
-    public static void fifoPageReplacement(int[] pages, int frames) {
-        Queue<Integer> queue = new LinkedList<>();
-        int pageFaults = 0;
-        
-        System.out.println("\nPage Reference | Frames | Page Fault");
+
+    public static void runFIFO(int[] pages, int frameLimit) {
+        Queue<Integer> memory = new LinkedList<>();
+        int faults = 0;
+
+        System.out.println("\nPage\tFrames\t\tPage Fault");
         for (int page : pages) {
-            if (!queue.contains(page)) {
-                if (queue.size() == frames) {
-                    queue.poll(); // Remove the oldest page
-                }
-                queue.add(page);
-                pageFaults++;
-                System.out.println(page + " | " + queue + " | Yes");
+            if (!memory.contains(page)) {
+                if (memory.size() == frameLimit) memory.poll();
+                memory.add(page);
+                faults++;
+                System.out.println(page + "\t" + memory + "\tYes");
             } else {
-                System.out.println(page + " | " + queue + " | No");
+                System.out.println(page + "\t" + memory + "\tNo");
             }
         }
-        
-        System.out.println("\nTotal Page Faults: " + pageFaults);
+        System.out.println("\nTotal Page Faults: " + faults);
     }
 }
 
@@ -53,47 +46,44 @@ import java.util.*;
 public class LRUPageReplacement {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
-        
+
         System.out.print("Enter the number of frames: ");
         int frames = sc.nextInt();
-        
+
         System.out.print("Enter the number of pages: ");
         int pagesCount = sc.nextInt();
-        
+
         int[] pages = new int[pagesCount];
         System.out.println("Enter the reference string: ");
-        for (int i = 0; i < pagesCount; i++) {
-            pages[i] = sc.nextInt();
-        }
-        
+        for (int i = 0; i < pagesCount; i++) pages[i] = sc.nextInt();
+
         lruPageReplacement(pages, frames);
         sc.close();
     }
-    
+
     public static void lruPageReplacement(int[] pages, int frames) {
         List<Integer> memory = new ArrayList<>(frames);
-        Map<Integer, Integer> pageIndices = new HashMap<>();
-        int pageFaults = 0;
-        
+        Map<Integer, Integer> lastUsed = new HashMap<>();
+        int faults = 0;
+
         System.out.println("\nPage Reference | Frames | Page Fault");
         for (int i = 0; i < pages.length; i++) {
             int page = pages[i];
             if (!memory.contains(page)) {
                 if (memory.size() == frames) {
-                    int lruPage = Collections.min(pageIndices.entrySet(), Comparator.comparingInt(Map.Entry::getValue)).getKey();
+                    int lruPage = Collections.min(lastUsed.entrySet(), Comparator.comparingInt(Map.Entry::getValue)).getKey();
                     memory.remove((Integer) lruPage);
-                    pageIndices.remove(lruPage);
+                    lastUsed.remove(lruPage);
                 }
                 memory.add(page);
-                pageFaults++;
+                faults++;
                 System.out.println(page + " | " + memory + " | Yes");
             } else {
                 System.out.println(page + " | " + memory + " | No");
             }
-            pageIndices.put(page, i);
+            lastUsed.put(page, i);
         }
-        
-        System.out.println("\nTotal Page Faults: " + pageFaults);
+        System.out.println("\nTotal Page Faults: " + faults);
     }
 }
 
@@ -105,64 +95,62 @@ import java.util.*;
 public class OptimalPageReplacement {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
-        
+
         System.out.print("Enter the number of frames: ");
         int frames = sc.nextInt();
-        
+
         System.out.print("Enter the number of pages: ");
         int pagesCount = sc.nextInt();
-        
+
         int[] pages = new int[pagesCount];
         System.out.println("Enter the reference string: ");
-        for (int i = 0; i < pagesCount; i++) {
-            pages[i] = sc.nextInt();
-        }
-        
+        for (int i = 0; i < pagesCount; i++) pages[i] = sc.nextInt();
+
         optimalPageReplacement(pages, frames);
         sc.close();
     }
-    
+
     public static void optimalPageReplacement(int[] pages, int frames) {
         List<Integer> memory = new ArrayList<>(frames);
-        int pageFaults = 0;
-        
+        int faults = 0;
+
         System.out.println("\nPage Reference | Frames | Page Fault");
         for (int i = 0; i < pages.length; i++) {
             int page = pages[i];
             if (!memory.contains(page)) {
                 if (memory.size() == frames) {
-                    int farthest = -1, indexToReplace = -1;
-                    for (int j = 0; j < memory.size(); j++) {
-                        int nextUse = findNextUse(pages, i + 1, memory.get(j));
-                        if (nextUse == -1) {
-                            indexToReplace = j;
-                            break;
-                        }
-                        if (nextUse > farthest) {
-                            farthest = nextUse;
-                            indexToReplace = j;
-                        }
-                    }
+                    int indexToReplace = findPageToReplace(pages, memory, i + 1);
                     memory.set(indexToReplace, page);
                 } else {
                     memory.add(page);
                 }
-                pageFaults++;
+                faults++;
                 System.out.println(page + " | " + memory + " | Yes");
             } else {
                 System.out.println(page + " | " + memory + " | No");
             }
         }
-        
-        System.out.println("\nTotal Page Faults: " + pageFaults);
+        System.out.println("\nTotal Page Faults: " + faults);
     }
-    
-    private static int findNextUse(int[] pages, int startIndex, int page) {
-        for (int i = startIndex; i < pages.length; i++) {
-            if (pages[i] == page) {
-                return i;
+
+    private static int findPageToReplace(int[] pages, List<Integer> memory, int startIndex) {
+        int farthest = -1, indexToReplace = 0;
+        for (int i = 0; i < memory.size(); i++) {
+            int page = memory.get(i);
+            int nextUse = -1;
+            for (int j = startIndex; j < pages.length; j++) {
+                if (pages[j] == page) {
+                    nextUse = j;
+                    break;
+                }
+            }
+            if (nextUse == -1) return i; // Not used again, replace immediately
+            if (nextUse > farthest) {
+                farthest = nextUse;
+                indexToReplace = i;
             }
         }
-        return -1;
+        return indexToReplace;
     }
 }
+
