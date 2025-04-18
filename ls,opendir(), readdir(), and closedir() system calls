@@ -1,33 +1,25 @@
 3.Unix program in C that simulates the functionality of the ls,opendir(), readdir(), and closedir() system calls command. 
 
-#include <stdio.h> 
-#include <stdlib.h> 
-#include <dirent.h> 
- 
-int main(int argc, char *argv[]) { 
-    struct dirent *entry; 
-    DIR *dir; 
- 
-    // Check if directory path is provided 
-    if (argc < 2) { 
-        printf("Usage: %s <directory_path>\n", argv[0]); 
-        return EXIT_FAILURE; 
-    } 
- 
-    // Open the directory 
-    dir = opendir(argv[1]); 
-    if (dir == NULL) { 
-        perror("opendir"); 
-        return EXIT_FAILURE; 
-    } 
- 
-    // Read and print directory entries 
-    while ((entry = readdir(dir)) != NULL) { 
-        printf("%s\n", entry->d_name); 
-    } 
- 
-    // Close the directory 
-    closedir(dir); 
-     
-    return EXIT_SUCCESS; 
-} 
+#include <stdio.h>
+#include <stdlib.h>
+#include <dirent.h>
+
+int main(int argc, char *argv[]) {
+    if (argc < 2) {
+        fprintf(stderr, "Usage: %s <directory_path>\n", argv[0]);
+        return EXIT_FAILURE;
+    }
+
+    DIR *dir = opendir(argv[1]);
+    if (!dir) {
+        perror("opendir");
+        return EXIT_FAILURE;
+    }
+
+    struct dirent *entry;
+    while ((entry = readdir(dir)) != NULL)
+        printf("%s\n", entry->d_name);
+
+    closedir(dir);
+    return EXIT_SUCCESS;
+}
